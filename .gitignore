@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+
+range_image/build/*
+*.pcd
