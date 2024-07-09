@@ -1,3 +1,3 @@
 #pragma once
 
-// constexpr double M_PI = 3.14159265358979323846;
+#define CHECK_TYPE(x, type) (std::type_index(typeid(type)) == std::type_index(typeid(x)))

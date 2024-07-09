@@ -1,26 +1,23 @@
 #include "range_image.h"
+#include <pcl/range_image/range_image.h>
 
+#include <pcl/visualization/range_image_visualizer.h>
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/console/parse.h>
+#include <pcl/visualization/cloud_viewer.h>
 int main(int argc, char** argv) {
   using namespace point_cloud;
-  pcl::PointCloud<pcl::PointXYZI> pointCloud;
-    // Generate the data
-    for (float y=-0.5f; y<=0.5f; y+=0.01f) {
-        for (float z=-0.5f; z<=0.5f; z+=0.01f) {
-        pcl::PointXYZI point;
-        point.x = 2.0f - y;
-        point.y = y;
-        point.z = z;
-        point.intensity = 0.1;
-        pointCloud.push_back(point);
-        }
-    }
-    pointCloud.width = pointCloud.size();
-    pointCloud.height = 1;
-
-
-    RangeImage<pcl::PointCloud<pcl::PointXYZI>> range_img(1024, 2048);
-    range_img.createImageFromPointCloud(pointCloud, 25, -5);
-    range_img.show();
-
-    return 0;
+  // load pcd data
+  std::string path = "../1718164051300270080.pcd";
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
+  if (-1 == pcl::io::loadPCDFile<pcl::PointXYZI>(path, *cloud)) {
+    std::cout << "load pcd file error" << std::endl;
+    return -1;
+  } else {
+    std::cout << "points size is " << cloud->width * cloud->height << std::endl;
+  }
+  RangeImage<pcl::PointCloud<pcl::PointXYZI>> range_img(64, 1024); //height, width (40, 1024)
+  range_img.createImageFromPointCloud(*cloud, 15, -25);
+  range_img.show();
+  return 0;
 }
