@@ -5,8 +5,17 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/console/parse.h>
 #include <pcl/visualization/cloud_viewer.h>
+
+#include "utils.hpp"
+
 int main(int argc, char** argv) {
   using namespace point_cloud;
+
+  // load calibration file
+  auto calibration_matrix = utils::LoadCalibrationFile::loadFile("../pose.txt");
+  std::cout << "calibratin size is " << calibration_matrix.rows() << std::endl;
+  std::cout << "calibratin size is " << calibration_matrix.cols() << std::endl;
+
   // load pcd data
   std::string path = "../1718164051300270080.pcd";
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
@@ -19,5 +28,6 @@ int main(int argc, char** argv) {
   RangeImage<pcl::PointCloud<pcl::PointXYZI>> range_img(64, 1024); //height, width (40, 1024)
   range_img.createImageFromPointCloud(*cloud, 15, -25);
   range_img.show();
+
   return 0;
 }

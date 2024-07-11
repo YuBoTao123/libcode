@@ -11,23 +11,27 @@
 #include <opencv2/core.hpp>
 #include <opencv2/opencv.hpp>
 
-#include "type_def.h"
-
 #include <typeinfo>
 #include <typeindex>
+
+// manif
+#include <manif/manif.h>
+
+#include "type_def.h"
 
 namespace point_cloud {
 
 template<typename P>
 class RangeImage {
   public:
-    RangeImage(int H, int W) :
+    RangeImage(int H, int W, const manif::SE3d& se3 = manif::SE3d::Identity()) :
         H_(H), W_(W),
         distance_mat_(H, W, CV_64FC1, cv::Scalar::all(-1.0)),
         intensity_mat_(H, W, CV_64FC1, cv::Scalar::all(-1.0)),
         point_mat_(H, W, CV_64FC3, cv::Scalar::all(-1.0)),
         index_mat_(H, W, CV_32SC1, cv::Scalar::all(-1.0)),
-        mask_mat_(H, W, CV_8UC1, cv::Scalar::all(0)) {}
+        mask_mat_(H, W, CV_8UC1, cv::Scalar::all(0)),
+        se3_(se3) {}
     virtual ~RangeImage() = default;
 
     void reset() {
@@ -50,10 +54,13 @@ class RangeImage {
 
         for (int i = 0; i < cloud.points.size(); i++) {
             const auto& point_iter = cloud.points.at(i);
-            distance = std::sqrt( point_iter.x * point_iter.x + point_iter.y * point_iter.y +
-                                    point_iter.z * point_iter.z);
-            double yaw = -atan2(point_iter.y, point_iter.x); // ?
-            double pitch = asin(point_iter.z / distance);
+            Eigen::Vector3d eigen_pt(point_iter.x, point_iter.y, point_iter.z);
+            auto transformed_point = se3_ .act(eigen_pt);
+
+            distance = std::sqrt( transformed_point.x() * transformed_point.x() + transformed_point.y() * transformed_point.y() +
+                                    transformed_point.z() * transformed_point.z());
+            double yaw = -atan2(transformed_point.y(), transformed_point.x()); // ?
+            double pitch = asin(transformed_point.z() / distance);
             double proj_x = (yaw / M_PI + 1.0) * 0.5;
             double proj_y = 1.0 - (pitch + std::fabs(fov_down_rad)) / fov_rad;
 
@@ -76,7 +83,7 @@ class RangeImage {
             }
             distance_mat_.at<double>(proj_y_index, proj_x_index) = distance;
             intensity_mat_.at<double>(proj_y_index, proj_x_index) = intensity;
-            point_mat_.at<cv::Vec3d>(proj_y_index, proj_x_index) = cv::Vec3d(point_iter.x, point_iter.y, point_iter.z);
+            point_mat_.at<cv::Vec3d>(proj_y_index, proj_x_index) = cv::Vec3d(transformed_point.x(), transformed_point.y(), transformed_point.z());
             index_mat_.at<int32_t>(proj_y_index, proj_x_index) = i;
             mask_mat_.at<u_char>(proj_y_index, proj_x_index) = 255;
             mat_map_["distance"] = distance_mat_;
@@ -105,6 +112,10 @@ class RangeImage {
         return mat_map_.at(key);
     }
 
+    std::unordered_map<std::string, cv::Mat>& getAllMat() {
+        return mat_map_;
+    }
+
   private:
     int H_;
     int W_;
@@ -114,7 +125,7 @@ class RangeImage {
     cv::Mat index_mat_;
     cv::Mat mask_mat_;
     std::unordered_map<std::string, cv::Mat> mat_map_;
+    manif::SE3d se3_;
 };
-
 
 }

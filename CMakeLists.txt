@@ -5,11 +5,33 @@ project(range_image_creation)
 find_package(PCL REQUIRED)
 find_package( OpenCV REQUIRED )
 MESSAGE(STATUS "OpenCV version: "${OpenCV_VERSION})
+find_package(manif REQUIRED)
+find_package(Eigen3 REQUIRED)
+
+include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
-add_executable (range_image_creation main.cpp)
-target_link_libraries (range_image_creation ${PCL_LIBRARIES}  ${OpenCV_LIBS})
+INCLUDE_DIRECTORIES( ${OpenCV_INCLUDE_DIRS} )
+
+# 使用 file(GLOB_RECURSE ...) 查找 .cpp 文件
+# file(GLOB_RECURSE RANGE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/range_image/*.cpp")
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/range_image)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/common)
+
+# add_library(range_image
+#     ${RANGE_SOURCES}
+# )
+# link_libraries(range_image
+#     ${PCL_LIBRARIES}  
+#     ${OpenCV_LIBS}
+#     ${PCL_LIBRARY_DIRS}
+# )
+
+add_executable (range_image_creation app/main.cpp)
+target_link_libraries (range_image_creation 
+    ${PCL_LIBRARIES}  
+    ${OpenCV_LIBS}
+    ${PCL_LIBRARY_DIRS})
 
 # CMakeLists.txt 示例
 # cmake_minimum_required(VERSION 3.10)
