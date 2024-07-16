@@ -5,11 +5,16 @@ project(range_image_creation)
 set(CMAKE_CXX_STANDARD 17)
 
 
-find_package(PCL REQUIRED)
+find_package(PCL REQUIRED COMPONENTS common io visualization)
 find_package( OpenCV REQUIRED )
 MESSAGE(STATUS "OpenCV version: "${OpenCV_VERSION})
 find_package(manif REQUIRED)
 find_package(Eigen3 REQUIRED)
+
+# 设置 LibTorch 路径
+set(CMAKE_PREFIX_PATH "/usr/local/libtorch")  # 替换为实际路径
+find_package(Torch REQUIRED)
+
 
 include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${PCL_INCLUDE_DIRS})
@@ -21,7 +26,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/range_image)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/common)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/tensorrt)
 
-# find_package(Torch REQUIRED)
 
 # file(GLOB_RECURSE RANGE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/range_image/*.cpp")
 # add_library(range_image
@@ -47,7 +51,8 @@ list(APPEND PLUGINS "nvonnxparser")
 list(APPEND PLUGINS "nvparsers")
 
 
-file(GLOB_RECURSE TENSORRT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/range_image/*.cpp")
+file(GLOB_RECURSE TENSORRT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/range_image/*.cpp"
+                                    "${CMAKE_CURRENT_SOURCE_DIR}/tensorrt/*.cpp")
 add_library(tensorrt SHARED
     ${TENSORRT_SOURCES}
 )
@@ -58,7 +63,7 @@ link_libraries(tensorrt
     ${TORCH_LIBRARIES}
     nvinfer
     nvonnxparser
-    nvparsers
+    # nvparsers
     ${CUDA_LIBRARIES}
     pthread
     dl
@@ -71,7 +76,8 @@ add_executable (range_image_creation app/main.cpp)
 target_link_libraries (range_image_creation 
     ${PCL_LIBRARIES}  
     ${OpenCV_LIBS}
-    ${PCL_LIBRARY_DIRS})
+    ${PCL_LIBRARY_DIRS}
+    ${TORCH_LIBRARIES})
 
 # CMakeLists.txt 示例
 # cmake_minimum_required(VERSION 3.10)

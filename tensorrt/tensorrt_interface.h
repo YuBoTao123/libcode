@@ -3,14 +3,18 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <iostream>
+#include <numeric>
 
 namespace model {
 
 using namespace nvinfer1;
 
 class Logger : public ILogger {
-  void log(Severity severity, const char *msg) override {
-    // Log messages
+  void log(Severity severity, const char *msg) noexcept override {
+    // suppress info-level messages
+      if (severity <= Severity::kWARNING)
+          std::cout << msg << std::endl;
   }
 };
 
@@ -26,7 +30,7 @@ public:
 
   bool allocateMemory();
 
-  void infer(float *in_data, flat *out_data);
+  void infer(float *in_data, float *out_data);
 
   int64_t volume(const nvinfer1::Dims &d) {
     return std::accumulate(d.d, d.d + d.nbDims, 1, std::multiplies<int64_t>());
@@ -34,7 +38,7 @@ public:
 
 private:
   const std::string engine_filename_;
-  nvinfer1::Logger logger_;
+  Logger logger_;
 
   nvinfer1::IRuntime *runtime_ = nullptr;
   nvinfer1::ICudaEngine *engine_ = nullptr;

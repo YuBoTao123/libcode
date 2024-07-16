@@ -1,7 +1,8 @@
 #include "tensorrt_interface.h"
 #include <fstream>
 #include <iostream>
-
+#include <memory>
+#include "cuda_runtime_api.h"
 using namespace model;
 
 TensorRTInference::TensorRTInference(const std::string &engine_file)
@@ -14,12 +15,12 @@ TensorRTInference::TensorRTInference(const std::string &engine_file)
 }
 
 TensorRTInference::~TensorRTInference() {
-  if (context_)
-    context_->destroy();
-  if (engine_)
-    engine_->destroy();
-  if (runtime_)
-    runtime_->destroy();
+  // if (context_) # tensorrt 10.0.1.6 not support
+  //   context_->destroy(); 
+  // if (engine_)
+  //   engine_->destroy();
+  // if (runtime_)
+  //   runtime_->destroy();
   cudaFree(input_device_mem_);
   cudaFree(output_device_mem_);
   input_device_mem_ = nullptr;
@@ -67,9 +68,9 @@ void TensorRTInference::deserilizeEngine() {
     return;
   }
   engine_ =
-      runtime_->deserializeCudaEngine(engine_data.get(), engine_size, nullptr);
+      runtime_->deserializeCudaEngine(engine_data.get(), engine_size);
   if (!engine_) {
-    runtime_->destroy();
+    // runtime_->destroy();
     runtime_ = nullptr;
     std::cerr << "deserialize engine fail" << std::endl;
   }
@@ -82,11 +83,16 @@ bool TensorRTInference::allocateMemory() {
   if (!context_)
     return false;
   // allocate memory
-  int inputIndex = engine_->getBindingIndex("input");
-  int outputIndex = engine_->getBindingIndex("output");
-  Dims input_dims = context_->getBindingDimensions(inputIndex);
-  Dims output_dims = context_->getBindingDimensions(outputIndex);
-  max_batch_size_ = engine_->getMaxBatchSize();
+  // int inputIndex = engine_->getBindingIndex("input");
+  // int outputIndex = engine_->getBindingIndex("output");
+  // Dims input_dims = context_->getBindingDimensions(inputIndex);
+  // Dims output_dims = context_->getBindingDimensions(outputIndex);
+  // max_batch_size_ = engine_->getMaxBatchSize();
+
+  Dims input_dims{4, {1, 6, 64, 2048}};
+  Dims output_dims{4, {1, 3, 64, 2048}};
+  max_batch_size_ = 1;
+
   input_size_ = volume(input_dims) * max_batch_size_;
   output_size_ = volume(output_dims) * max_batch_size_;
   input_host_mem_.resize(input_size_);
