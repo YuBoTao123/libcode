@@ -24,7 +24,7 @@ public:
 
   void deserilizeEngine();
 
-  void allocateMemory();
+  bool allocateMemory();
 
   void infer(float *in_data, flat *out_data);
 
