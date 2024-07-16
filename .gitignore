@@ -34,3 +34,4 @@
 range_image/build/*
 *.pcd
 build/*
+third_party/*

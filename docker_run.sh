@@ -3,6 +3,7 @@
 HERE=$(pwd)
 DOCKER_USER="${USER}"
 DEV_CONTAINER="nvcr.io/nvidia/tensorrt:21.05-py3"
+# DEV_CONTAINER="nvcr.io/nvidia/tensorrt:24.06-py3-igpu"
 # DATA_DIR="pingshan_data"
 # echo "data dir is $DATA_DIR"
 xhost +

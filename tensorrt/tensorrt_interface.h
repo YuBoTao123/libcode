@@ -1,40 +1,57 @@
 #pragma once
-#include <vector>
-#include <string>
+#include "NvInfer.h"
 #include <fstream>
+#include <string>
+#include <vector>
 
 namespace model {
 
-class TensorRTInference {
-public:
-    TensorRTInference(const std::string& engine_file):
-                    engine_filename_(engine_file) {}
+using namespace nvinfer1;
 
-    virtual ~TensorRTInference();
-
-    bool init();
-
-    void deserilizeEngine();
-
-    void allocateMemory();
-
-    void infer();
-
-
-
-
-private:
-    const std::string engine_filename_;
-    nvinfer1::ILogger* logger_ = nullptr;
-    nvinfer1::IRuntime* runtime_ = nullptr;
-    nvinfer1::ICudaEngine* engine_ = nullptr;
-    nvinfer1::IExecutionContext* context_ = nullptr;
-    std::vector<void*> input_buffers_;
-    std::vector<void*> output_buffers_;
+class Logger : public ILogger {
+  void log(Severity severity, const char *msg) override {
+    // Log messages
+  }
 };
 
+class TensorRTInference {
+public:
+  TensorRTInference(const std::string &engine_file);
 
+  virtual ~TensorRTInference();
 
+  bool init();
 
+  void deserilizeEngine();
 
-}
+  void allocateMemory();
+
+  void infer(float *in_data, flat *out_data);
+
+  int64_t volume(const nvinfer1::Dims &d) {
+    return std::accumulate(d.d, d.d + d.nbDims, 1, std::multiplies<int64_t>());
+  }
+
+private:
+  const std::string engine_filename_;
+  nvinfer1::Logger logger_;
+
+  nvinfer1::IRuntime *runtime_ = nullptr;
+  nvinfer1::ICudaEngine *engine_ = nullptr;
+  nvinfer1::IExecutionContext *context_ = nullptr;
+  std::vector<void *> input_buffers_;
+  std::vector<void *> output_buffers_;
+
+  int max_batch_size_ = 1;
+  int input_size_ = 0;
+  int output_size_ = 0;
+  // host memmory
+  std::vector<float> input_host_mem_;
+  std::vector<float> output_host_mem_;
+
+  // device memory
+  void *input_device_mem_ = nullptr;
+  void *output_device_mem_ = nullptr;
+};
+
+} // namespace model
